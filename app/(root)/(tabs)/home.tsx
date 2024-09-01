@@ -1,16 +1,17 @@
-import { useFetch } from "@/lib/fetch";
-import { useLocationStore } from "@/store";
-import * as Location from "expo-location";
-import { Ride } from "@/types/type";
 import { useAuth, useUser } from "@clerk/clerk-expo";
+import * as Location from "expo-location";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import RideCard from "@/components/RideCard";
-import { icons, images } from "@/constants";
+
 import GoogleTextInput from "@/components/GoogleTextInput";
 import Map from "@/components/Map";
+import RideCard from "@/components/RideCard";
+import { icons, images } from "@/constants";
+import { useFetch } from "@/lib/fetch";
+import { useLocationStore } from "@/store";
+import { Ride } from "@/types/type";
 
 const Home = () => {
     const { user } = useUser();
@@ -23,9 +24,9 @@ const Home = () => {
         router.replace("/(auth)/sign-in");
     };
 
-    const [hasPermission, setHasPermission] = useState<boolean>(false);
+    const [_, setHasPermission] = useState<boolean>(false);
 
-    const { data: recentRides, loading, error } = useFetch<Ride[]>(`/(api)/ride/${user?.id}`);
+    const { data: recentRides, loading } = useFetch<Ride[]>(`/(api)/ride/${user?.id}`);
 
     useEffect(() => {
         (async () => {
@@ -48,7 +49,7 @@ const Home = () => {
                 address: `${address[0].name}, ${address[0].region}`,
             });
         })();
-    }, []);
+    }, [setUserLocation]);
 
     const handleDestinationPress = (location: {
         latitude: number;

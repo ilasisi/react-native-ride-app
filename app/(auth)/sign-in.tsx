@@ -38,7 +38,7 @@ const SignIn = () => {
             console.log(JSON.stringify(err, null, 2));
             Alert.alert("Error", err.errors[0].longMessage);
         }
-    }, [isLoaded, form]);
+    }, [isLoaded, form, setActive, signIn]);
 
     return (
         <ScrollView className="flex-1 bg-white">

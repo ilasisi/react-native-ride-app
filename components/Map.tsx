@@ -49,7 +49,14 @@ const Map = () => {
                 setDrivers(drivers as MarkerData[]);
             });
         }
-    }, [markers, destinationLatitude, destinationLongitude]);
+    }, [
+        markers,
+        destinationLatitude,
+        destinationLongitude,
+        setDrivers,
+        userLatitude,
+        userLongitude,
+    ]);
 
     const region = calculateRegion({
         userLatitude,
