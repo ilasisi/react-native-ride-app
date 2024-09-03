@@ -8,14 +8,16 @@ import CustomButton from "@/components/CustomButton";
 import InputField from "@/components/InputField";
 import OAuth from "@/components/OAuth";
 import { icons, images } from "@/constants";
-import { fetchAPI } from "@/lib/fetch";
+import { useCreateUser } from "@/hooks/mutation/user";
 
 const SignUp = () => {
     const { isLoaded, signUp, setActive } = useSignUp();
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const { mutate } = useCreateUser();
 
     const [form, setForm] = useState({
-        name: "",
+        first_name: "",
+        last_name: "",
         email: "",
         password: "",
     });
@@ -54,14 +56,14 @@ const SignUp = () => {
             const completeSignUp = await signUp.attemptEmailAddressVerification({
                 code: verification.code,
             });
+            console.log(completeSignUp.missingFields);
             if (completeSignUp.status === "complete") {
-                await fetchAPI("/(api)/user", {
-                    method: "POST",
-                    body: JSON.stringify({
-                        name: form.name,
-                        email: form.email,
-                        clerkId: completeSignUp.createdUserId,
-                    }),
+                mutate({
+                    first_name: form.first_name,
+                    last_name: form.last_name,
+                    email: form.email,
+                    clerk_id: completeSignUp.createdUserId,
+                    password: form.password,
                 });
 
                 await setActive({ session: completeSignUp.createdSessionId });
@@ -102,8 +104,15 @@ const SignUp = () => {
                         label="Name"
                         placeholder="Enter name"
                         icon={icons.person}
-                        value={form.name}
-                        onChangeText={(value) => setForm({ ...form, name: value })}
+                        value={form.first_name}
+                        onChangeText={(value) => setForm({ ...form, first_name: value })}
+                    />
+                    <InputField
+                        label="Name"
+                        placeholder="Enter name"
+                        icon={icons.person}
+                        value={form.last_name}
+                        onChangeText={(value) => setForm({ ...form, last_name: value })}
                     />
                     <InputField
                         label="Email"

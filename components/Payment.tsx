@@ -7,11 +7,11 @@ import { Paystack, paystackProps } from "react-native-paystack-webview";
 
 import CustomButton from "@/components/CustomButton";
 import { images } from "@/constants";
-import { fetchAPI } from "@/lib/fetch";
 import { useLocationStore } from "@/store";
 import { PaymentProps } from "@/types/type";
+import { useCreateRide } from "@/hooks/mutation/ride";
 
-const Payment = ({ fullName, email, amount, driverId, rideTime }: PaymentProps) => {
+const Payment = ({ email, amount, driverId, rideTime }: PaymentProps) => {
     const paystackWebViewRef = useRef<paystackProps.PayStackRef>();
     const {
         userAddress,
@@ -24,38 +24,34 @@ const Payment = ({ fullName, email, amount, driverId, rideTime }: PaymentProps) 
 
     const { userId } = useAuth();
     const [success, setSuccess] = useState<boolean>(false);
+    const { mutate, isError } = useCreateRide();
 
     return (
         <>
             <Paystack
                 paystackKey={process.env.EXPO_PUBLIC_PAYSTACK_PUBLIC_KEY!}
                 billingEmail={email}
-                amount={parseInt(amount) * 100}
+                amount={parseInt(amount)}
                 onCancel={(e) => {
-                    Alert.alert(`${e}`);
+                    Alert.alert(`${e.status}`);
                 }}
                 onSuccess={async (res) => {
-                    const response = await fetchAPI("/(api)/ride/create", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            origin_address: userAddress,
-                            destination_address: destinationAddress,
-                            origin_latitude: userLatitude,
-                            origin_longitude: userLongitude,
-                            destination_latitude: destinationLatitude,
-                            destination_longitude: destinationLongitude,
-                            ride_time: rideTime.toFixed(0),
-                            fare_price: parseInt(amount) * 100,
-                            payment_status: "paid",
-                            driver_id: driverId,
-                            user_id: userId,
-                        }),
+                    mutate({
+                        origin_address: userAddress,
+                        destination_address: destinationAddress,
+                        origin_latitude: userLatitude,
+                        origin_longitude: userLongitude,
+                        destination_latitude: destinationLatitude,
+                        destination_longitude: destinationLongitude,
+                        ride_time: rideTime.toFixed(0),
+                        fare_price: parseInt(amount) * 100,
+                        payment_status: "paid",
+                        rider_id: driverId,
+                        user_id: userId,
+                        status: "accepted",
                     });
 
-                    if (response.data) {
+                    if (!isError) {
                         setSuccess(true);
                     }
                 }}

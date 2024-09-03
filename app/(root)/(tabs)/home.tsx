@@ -2,7 +2,15 @@ import { useAuth, useUser } from "@clerk/clerk-expo";
 import * as Location from "expo-location";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Image, Text, TouchableOpacity, View } from "react-native";
+import {
+    ActivityIndicator,
+    FlatList,
+    Image,
+    RefreshControl,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import GoogleTextInput from "@/components/GoogleTextInput";
@@ -12,6 +20,10 @@ import { icons, images } from "@/constants";
 import { useFetch } from "@/lib/fetch";
 import { useLocationStore } from "@/store";
 import { Ride } from "@/types/type";
+import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
+import { getUserRides } from "@/services/rideService";
+import { useQuery } from "@tanstack/react-query";
+import { useRefreshByUser } from "@/hooks/useRefreshByUser";
 
 const Home = () => {
     const { user } = useUser();
@@ -26,7 +38,17 @@ const Home = () => {
 
     const [_, setHasPermission] = useState<boolean>(false);
 
-    const { data: recentRides, loading } = useFetch<Ride[]>(`/(api)/ride/${user?.id}`);
+    const {
+        isPending,
+        data: recentRides,
+        refetch,
+    } = useQuery<Ride[], Error>({
+        queryKey: ["rides", user?.id],
+        queryFn: () => getUserRides(user?.id),
+    });
+
+    const { isRefetchingByUser, refetchByUser } = useRefreshByUser(refetch);
+    useRefreshOnFocus(refetch);
 
     useEffect(() => {
         (async () => {
@@ -72,9 +94,12 @@ const Home = () => {
                 contentContainerStyle={{
                     paddingBottom: 100,
                 }}
+                refreshControl={
+                    <RefreshControl refreshing={isRefetchingByUser} onRefresh={refetchByUser} />
+                }
                 ListEmptyComponent={() => (
                     <View className="flex flex-col items-center justify-center">
-                        {!loading ? (
+                        {!isPending ? (
                             <>
                                 <Image
                                     source={images.noResult}

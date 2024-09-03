@@ -1,16 +1,29 @@
 import { useUser } from "@clerk/clerk-expo";
-import { ActivityIndicator, FlatList, Image, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import RideCard from "@/components/RideCard";
 import { images } from "@/constants";
-import { useFetch } from "@/lib/fetch";
 import { Ride } from "@/types/type";
+import { useQuery } from "@tanstack/react-query";
+import { getUserRides } from "@/services/rideService";
+import { useRefreshByUser } from "@/hooks/useRefreshByUser";
+import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 
 const Rides = () => {
     const { user } = useUser();
 
-    const { data: recentRides, loading } = useFetch<Ride[]>(`/(api)/ride/${user?.id}`);
+    const {
+        isPending,
+        data: recentRides,
+        refetch,
+    } = useQuery<Ride[], Error>({
+        queryKey: ["rides", user?.id],
+        queryFn: () => getUserRides(user?.id),
+    });
+
+    const { isRefetchingByUser, refetchByUser } = useRefreshByUser(refetch);
+    useRefreshOnFocus(refetch);
 
     return (
         <SafeAreaView className="flex-1 bg-white">
@@ -23,9 +36,12 @@ const Rides = () => {
                 contentContainerStyle={{
                     paddingBottom: 100,
                 }}
+                refreshControl={
+                    <RefreshControl refreshing={isRefetchingByUser} onRefresh={refetchByUser} />
+                }
                 ListEmptyComponent={() => (
                     <View className="flex flex-col items-center justify-center">
-                        {!loading ? (
+                        {!isPending ? (
                             <>
                                 <Image
                                     source={images.noResult}

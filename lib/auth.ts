@@ -1,7 +1,7 @@
 import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
 
-import { fetchAPI } from "@/lib/fetch";
+import { useCreateUser } from "@/hooks/mutation/user";
 
 export const tokenCache = {
     async getToken(key: string) {
@@ -30,6 +30,8 @@ export const tokenCache = {
 };
 
 export const googleOAuth = async (startOAuthFlow: any) => {
+    const { mutate } = useCreateUser();
+
     try {
         const { createdSessionId, setActive, signUp } = await startOAuthFlow({
             redirectUrl: Linking.createURL("/(root)/(tabs)/home"),
@@ -40,13 +42,11 @@ export const googleOAuth = async (startOAuthFlow: any) => {
                 await setActive({ session: createdSessionId });
 
                 if (signUp.createdUserId) {
-                    await fetchAPI("/(api)/user", {
-                        method: "POST",
-                        body: JSON.stringify({
-                            name: `${signUp.firstName} ${signUp.lastName}`,
-                            email: signUp.emailAddress,
-                            clerkId: signUp.createdUserId,
-                        }),
+                    mutate({
+                        first_name: signUp.firstName,
+                        last_name: signUp.lastName,
+                        email: signUp.emailAddress,
+                        clerk_id: signUp.createdUserId,
                     });
                 }
 
